@@ -2,6 +2,7 @@ import { FreshContext } from "$fresh/server.ts";
 import { Handlers } from "$fresh/server.ts";
 import { PranksTable } from "../../../../db/schema/pranks.ts";
 import Email from "../../../../email.ts";
+import state from "../../../../state.ts";
 import { DatabaseState } from "../../../_middleware.ts";
 
 function optional(value: string): string | undefined {
@@ -40,7 +41,7 @@ function validateForm(body: any): boolean {
   const timeDiff = new Date().getTime() - body.weddingDate;
   valid &&= !Number.isNaN(timeDiff);
   valid &&= !(timeDiff < 30_000); // 30 seconds not ellapsed
-  valid &&= !(timeDiff > (60_000 * 60 * 24)); // More than 1 day ellapsed
+  valid &&= !(timeDiff > (60_000 * 60 * 6)); // More than 6 hours
   // Data validation
   valid &&= body.victimName.length < 100;
   valid &&= body.description.length > 100;
@@ -77,12 +78,19 @@ function validateForm(body: any): boolean {
 
 export const handler: Handlers<unknown, DatabaseState> = {
   async POST(req: Request, ctx: FreshContext<DatabaseState>) {
+    if (!state.sendPrankEnabled) {
+      return new Response(JSON.stringify({ "message": "prank requests are disabled at the moment" }), {
+        status: 403,
+      });
+    }
     try {
       const body = await req.json();
       const response = new Response(JSON.stringify({ "message": "ok" }));
       // TODO: rate limiting
 
+      // TODO better logging
       if (!validateForm(body)) {
+        console.info("rejected prank: failed data validation");
         return response;
       }
 

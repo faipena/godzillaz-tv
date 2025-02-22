@@ -16,6 +16,7 @@ export enum MainStage {
 interface MainProps {
   videoId: Signal<string>;
   stage: Signal<MainStage>;
+  prankEnabled: Signal<boolean>;
 }
 
 // Class representing the form data
@@ -83,21 +84,25 @@ export default function Main(props: MainProps) {
     </button>
   );
 
+  const requestPrankButton = () => (
+    <Button
+      class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-full transition duration-300 "
+      onClick={() => {
+        resetForm();
+        props.stage.value = MainStage.VictimDetails;
+      }}
+    >
+      Richiedi uno scherzo
+    </Button>
+  );
+
   // Render the video stage
-  const renderVideoStage = () => (
+  const renderVideoStage = (requestPranksEnabled: boolean) => (
     <>
       <div class="w-full max-w-4xl mb-8 justify-center flex">
         <YoutubePlayer videoId={props.videoId.value}></YoutubePlayer>
       </div>
-      <Button
-        class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 px-6 rounded-full transition duration-300 "
-        onClick={() => {
-          resetForm();
-          props.stage.value = MainStage.VictimDetails;
-        }}
-      >
-        Richiedi uno scherzo
-      </Button>
+      {requestPranksEnabled && requestPrankButton()}
     </>
   );
 
@@ -268,7 +273,7 @@ export default function Main(props: MainProps) {
 
   return (
     <>
-      {isVideoStage && renderVideoStage()}
+      {isVideoStage && renderVideoStage(props.prankEnabled.value)}
       {isVictimDetailsStage && renderVictimDetailsStage()}
       {isPrankDetailsStage && renderPrankDetailsStage()}
       {isRequestSentStage && renderRequestSentStage()}
